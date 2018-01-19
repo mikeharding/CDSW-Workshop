@@ -1,114 +1,84 @@
-# cdsw_install
-Automated installed of CDH 5.12, CDSW 1.1 with Director 2.5
+# CDSW Workshop Installation
+Automated installation of CDH 5.13.1, CDSW 1.2.2 using Director 2.6.1 serving as the platform for the CDSW Hands-On Workshop.
 
-Basic idea is to have a single definition of a cluster which is shared across multiple cloud providers and to make it very simple for a user to say 'I want this cluster to be on cloud provider X, or cloud provider Y', confident that the cluster definition is the same; i.e. to separate out the cluster configuration that is independent of cloud providers from that which is unique to each provider and to make it easy for the user to indicate which cloud provider to use. 
+These scripts are based on Toby Ferguson's CDSW Cloud Install scripts available at [https://github.com/TobyHFerguson/cdsw_install](https://github.com/TobyHFerguson/cdsw_install).
 
-We support and test on two cloud providers (AWS and GCP), and the user choose which cloud provider to use by choosing the top level or provider conf file (`aws.conf` or `gcp.conf`).
+This repository is a subset of cdsw_install, simplified and designed to deploy a consistent cloud configuration on AWS to deliver a CDSW hands-on workshop.  
 
-## File Organization
+
+## File Organization  
 ### Overview
-The system comprises a set of files, some common across cloud providers, and some specific to a particular cloud provider. The common files (and those which indicate which cloud provider to user) are all in the top level directory; the cloud provider specific files are cloud provider specific directories.
-### File Kinds
-There are three kinds of files:
-+ Property Files - You are expected to modify these. They match the `*.properties` shell pattern and use the (Java Properties format)[https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html#load-java.io.Reader-]
-+ Conf files - You are not expected to modify these. They match the `*.conf` shell pattern and use the (HOCON format)[https://github.com/typesafehub/config/blob/master/HOCON.md) format (a superset of JSON).
-+ SECRET files - these have the prefix `SECRET` and are used to hold secrets for each provider. The exact format is provider specific.
+This system is a subset of cdsw_install. It only contains required pre-configured and tested cloud provider files for AWS.
 
-The intent is that those items that you need to edit are in format (`*.properties` files) that is easy to edit, whereas those items that you don't need to touch are in the harder to edit HOCON format (i.e. `*.conf` files).
+The complete cdsw_install repository includes a set of configuration files comprised of common files used across cloud providers, and files associated with a particular cloud provider.  GCP and Azure specific files have been removed for simplicity.
+
+### File Kinds
+There are two kinds of files:
++ Property Files - You are expected to modify these. They match the `*.properties` shell pattern and use the [Java Properties format](https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html#load-java.io.Reader-).
++ Conf files - You are not expected to modify these. They match the `*.conf` shell pattern and use the [HOCON format](https://github.com/typesafehub/config/blob/master/HOCON.md), a superset of JSON.
+
+The intent is that those items that you need to edit are in format (`*.properties`) files that are easy to edit, whereas those items that you don't need to touch are in the harder to edit HOCON format (i.e. `*.conf` files).
 
 ### Directory Structure
-The top level directory contains the main `conf` files (`aws.conf` & `gcp.conf`). These are the files that indicate which cloud provider is to be used.
+The top level directory contains the main `conf` files (`common.conf` & `aws.conf`).
 
-The `aws` and `gcp` directories contain the files relevant to each cloud provider. We'll reference the general notion of a provider directory using the `$PROVIDER` nomenclature, where `$PROVIDER` takes the value `aws` or `gcp`.
+The `aws` directory contain files relevant to AWS.
 
-The main configuration file is `$PROVIDER.conf`. This file itself includes the files needed for the specific cloud provider. We will only describe the properties files here:
+The main configuration file is `aws.conf`. This file itself includes the files needed for an AWS deployment. We will only describe the properties files here:
 
-* `$PROVIDER/provider.properties` - a file containing the provider configuration for Amazon Web Services
-* `$PROVIDER/ssh.properties` - a file containing the details required to configure passwordless ssh access into the machines that director will create.
-* `$PROVIDER/owner_tag.properties` - a file containing the mandatory value for the `owner` tag which is used to tag all VM instances. Within the Cloudera FCE account a VM without an owner tag will be deleted. It is customary (but not enforced) to use your Cloudera id for this tag value.
-* `$PROVIDER/kerberos.properties` - an *optional* file containing the details of the Kerberos Key Distribution Center (KDC) to be used for kerberos authentication. (See Kerberos Tricks below for details on how to easily setup an MIT KDC and use it). *If* `kerberos.properties` is provided then a secure cluster is set up. If `kerberos.properties` is not provided then an insecure cluster will be setup.
+* `aws/provider.properties` - a file containing the configuration for Amazon Web Services
+* `aws/ssh.properties` - a file containing the details required to configure passwordless ssh access into the machines that Director will create.
+* `aws/owner_tag.properties` - a file containing the mandatory value for the `owner` tag which is used to tag all VM instances. Within the Cloudera FCE account, a VM without an owner tag will be deleted. It is customary (but not enforced) to use your Cloudera id for this tag value.
+* `aws/kerberos.properties` - an *optional* file containing the details of the Kerberos Key Distribution Center (KDC) to be used for kerberos authentication. (See Kerberos Tricks below for details on how to easily setup an MIT KDC and use it). *If* `kerberos.properties` is provided then a secure cluster is set up. If `kerberos.properties` is not provided then an insecure cluster will be setup.  
 
-For GCP you will need to ensure that the plugin supports rhel7. Do this by adding the following line to your `google.conf` file. This file should be located in the provider directory: `/var/lib/cloudera-director-plugins/google-provider-*/etc` (where the `*` matches the version - something like `1.0.4` - of your plugins). You will likely have to create your own copy of google.conf by copying `google.conf.example` located in the same directory. Note that the exact path to the relevant image is obtained by navigating to GCP's 'Images' section and finding the corresponding OS/URL pair.
+
+## SECRET file
+The SECRET file is ignored by GIT and you must construct it yourself. We recommend setting its mode to 600, although that is not enforced anywhere.
+
+The secret file you need to create for AWS is  `aws/SECRET.properties`. It is in Java Properties format and contains your AWS secret access key:
 ```
-     rhel7 = "https://www.googleapis.com/compute/v1/projects/rhel-cloud/global/images/rhel-7-v20171025"
-```
-
-## SECRET files
-SECRET files are ignored by GIT and you must construct them yourself. We recommend setting their mode to 600, although that is not enforced anywhere.
-## AWS
-The secret file for AWS is  `aws/SECRET.properties`. It is in Java Properties format and contains the AWS secret access key:
-```
-AWS_SECRET_ACCESS_KEY=
+AWS_SECRET_ACCESS_KEY=<your secret key>
 ```
 Mine, with dots hiding characters from the secret key, looks like:
 ```
 AWS_SECRET_ACCESS_KEY=53Hrd................r0wiBbKn3
 ```
-If you fail to set up  the `AWS_SECRET_KEY` then you'll find that cloudera-director silently fails, but grepping for AWS_SECRET_KEY in the local log file will reveal all:
+If you fail to set up the `AWS_SECRET_KEY` then you'll find that cloudera-director silently fails, but grepping for AWS_SECRET_KEY in the local log file will reveal all:
 
 ```sh
-[centos@ip-10-0-0-239 ~]$ unset AWS_ACCESS_KEY_ID #just to make sure its undefined!
-[centos@ip-10-0-0-239 ~]$ cloudera-director bootstrap-remote filetest.conf --lp.remote.username=admin --lp.remote.password=admin
+$ unset AWS_ACCESS_KEY_ID #just to make sure its undefined!
+$ cloudera-director bootstrap-remote filetest.conf --lp.remote.username=admin --lp.remote.password=admin
 Process logs can be found at /home/centos/.cloudera-director/logs/application.log
 Plugins will be loaded from /var/lib/cloudera-director-plugins
 Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=256M; support was removed in 8.0
 Cloudera Director 2.4.0 initializing ...
-[centos@ip-10-0-0-239 ~]$ 
+$
 ```
 Looks like its failed, right, because it doesn't continue on. No error message! But if you execute:
-```
-[centos@ip-10-0-0-239 ~]$ grep AWS_SECRET ~/.cloudera-director/logs/application.log
+```sh
+$ grep AWS_SECRET ~/.cloudera-director/logs/application.log
 com.typesafe.config.ConfigException$UnresolvedSubstitution: filetest.conf: 28: Could not resolve substitution to a value: ${AWS_SECRET_ACCESS_KEY}
 ```
 You'll discover the problem! (Or there's another problem, and you should look in that log file for details).
 
-### GCP
-The secret file for GCP is called `SECRET.json`. It contains the full Google Secret Key, in JSON format, that you obtained when you made your google account.
 
-Mine, with characters of the private key id and lines of the private key replaced by dots, looks like:
-```
-{
-  "type": "service_account",
-  "project_id": "gcp-se",
-  "private_key_id": "b27f..................66fea",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDMUKtOk000wkvJ\np/ZdwfkbpowUGMqpn2a0oQ9eTwIaLnPvrTIP3JcibWU7xkzoPXlD4hiANlkSqDqy
-.
-.
-.
-.
-.
-.
-UC2sMUZ1rtLCv14qg4iiXuA/RExTs1zRaZZ0r4c\nTDiZwBJEbs0flCAziv7mJ4TZ3LfGKCtrTOhUWRw/jfDHP+uJOpH2isGmytZ7uWVN\ndfllnxLITzHEQEMh0rbc/g3n\n-----END PRIVATE KEY-----\n",
-  "client_email": "tobys-service-account@gcp-se.iam.gserviceaccount.com",
-  "client_id": "108988546221753267035",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://accounts.google.com/o/oauth2/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/tobys-service-account%40gcp-se.iam.gserviceaccount.com"
-}
-```
+## Workflow
 
-# Workflow
-## Pre-requisites
-+ Ensure that Director server is setup correctly
-+ If using Kerberos check that you can construct a client and get a ticket from it.
+### Preparation
++ Edit the `aws/*.properties` and `aws/SECRET` files appropriately.
 
-## Preparation
-+ Choose the cloud provider you're going to work with and edit the `$PROVIDER/*.properties` and `$PROVIDER/SECRET` files appropriately.
-+ Ensure that all the files (including the SSH key file) is available to director (i.e copy or clone as necessary to the director server machine).
-+ Ensure that the `$PROVIDER/kerberos.properties` file is either absent (you don't want a kerberized cluster) or is present and correct (you want Director to kerberize your cluster using the given parameters)
 
-## Cluster Creation
-+ Execute a director bootstrap command using the cloud provider you chose:
+### Cluster Creation
++ Execute the following director bootstrap command:
 ```sh
-cloudera-director bootstrap-remote $PROVIDER.conf --lp.remote.username=admin --lp.remote.password=admin
+cloudera-director bootstrap-remote aws.conf --lp.remote.username=admin --lp.remote.password=admin
 ```
 
 ## Post Creation
-+ Once completed, use your cloud provider's console to find the public IP (`CDSW_PIB`) address of the CDSW instance. Its name in the cloud provider's console will begin with `cdsw-`. 
++ Once completed, use the AWS console to find the public IP (`CDSW_PIB`) address of the CDSW instance. Its name in the AWS console will begin with `cdsw-`.
 + You can reach the CDSW at `cdsw.CDSW_PIB.nip.io`. See below for details.
 
-All nodes in the cluster will contain the user `cdsw`. That user's password is `Cloudera1`. (If you used my mit kdc installation scripts from below then you'll also find that this user's kerberos username and password are `cdsw` and `Cloudera1` also).
+All nodes in the cluster will contain the user `cdsw`. That user's password is `Cloudera1`. (If you used the mit kdc installation scripts from below then you'll also find that this user's kerberos username and password are `cdsw` and `Cloudera1` also).
 
 ## Troubleshooting
 There are two logs of interest:
@@ -117,35 +87,15 @@ There are two logs of interest:
 
 If the cloudera-director client fails before communicating with the server you should look in the client log. Otherwise look in the server log.
 
-The server log can be large - I truncate it frequently; especially before using a new conf file!
-### GCP
-#### No Plugin
-If the client fails with this message:
-```sh
-* ErrorInfo{code=PROVIDER_EXCEPTION, properties={message=Mapping for image alias 'rhel7' not found.}, causes=[]}
-```
-then you've not configured the plugin for GCP, as detailed in the above section.
-#### Old Plugin
-If the client fails thus:
-```
-* Requesting an instance for Cloudera Manager ............ done
-* Installing screen package (1/1) .... done
-* Suspended due to failure ...
-```
-and the server log contains something like this:
-```
-peers certificate marked as not trusted by the user
-```
-then you've got a plugin configured, but its out of date. Go figure out the latest plugin URL and update the GCP plugins.
-
+The server log can be large - it should be truncated frequently; especially before using a new conf file!
 
 ## Limitations & Issues
 Relies on an [nip.io](http://nip.io) trick to make it work.
 
-You'll need to set two YARN config variables by hand 
+You'll need to set two YARN config variables by hand
 + `yarn.nodemanager.resource.memory-mb`
 + `yarn.scheduler.maximum-allocation-mb`
-+ 
+
 These are setup in the `common.conf` file, but if there's a problem (the values are inappropriate) then you'll see errors when you run a Spark job from CDSW in the CDSW project's console.
 
 ## NIP.io tricks
@@ -158,9 +108,11 @@ This technique is used in two places:
 This is great for hacking around with ephemeral devices such as VMs and Cloud images!
 
 ## Useful Scripts
-I use [install_director.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_director.sh) to install director, and [install_mit_kdc.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_kdc.sh) to install an mit kdc. (There's also [install_mit_client.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_client.sh) to create a client for testing purposes.).  
+[install_mit_kdc.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_kdc.sh) to install an mit kdc. [install_mit_client.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_client.sh) to create a client for testing purposes.  
+
 ## Kerberos Tricks
 (Refer to the mit scripts linked above for details).
+
 ## MIT KDC
 I setup an MIT KDC in the Director image and then create a `kerberos.conf` to use that:
 ```
@@ -246,29 +198,7 @@ In `/etc/krb5.conf` I have this:
  ```
  (Note that the IP address used is that of the private IP address of the director server; this is stable over reboot
  so works well)
- 
-## ActiveDirectory
-(Deprecated - I found this image to be unstable. It would just stop working after 3 days or so.)
-I use a public ActiveDirectory ami setup by Jeff Bean: `ami-a3daa0c6` to create an AD instance. 
 
-The username/password to the image are `Administrator/Passw0rd!`
-
-Allow at least 5, maybe 10 minutes for the image to spin up and work properly. 
-
-The kerberos settings (which you'd put into `kerberos.conf`) are:
-
-```
-krbAdminUsername: "cm@HADOOPSECURITY.LOCAL"
-krbAdminPassword: "Passw0rd!
-KDC_TYPE: "Active Directory"
-KDC_HOST: "hadoop-ad.hadoopsecurity.local"
-KDC_HOST_IP: # WHATEVER THE INTERNAL IP ADDRESS IS FOR THIS INSTANCE
-SECURITY_REALM: "HADOOPSECURITY.LOCAL"
-AD_KDC_DOMAIN: "OU=hadoop,DC=hadoopsecurity,DC=local"
-KRB_MANAGE_KRB5_CONF: true
-KRB_ENC_TYPES: "aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 arcfour-hmac-md5"
-```
-(Don't forget to drop the aes256 encryption if your images don't have the Java Crypto Extensions installed)
 
 ## Standard users and groups
 I use the following to create standard users and groups, running this on each machine in the cluster:

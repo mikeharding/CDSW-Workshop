@@ -3,7 +3,7 @@ Automated installation of CDH 5.13.1, CDSW 1.2.2 using Director 2.6.1 serving as
 
 These scripts are based on Toby Ferguson's CDSW Cloud Install scripts available at [https://github.com/TobyHFerguson/cdsw_install](https://github.com/TobyHFerguson/cdsw_install).
 
-This repository is a subset of cdsw_install, simplified and designed to deploy a consistent cloud configuration on AWS to deliver a CDSW hands-on workshop.  
+This repository is a subset of cdsw_install, simplified and designed to deploy a consistent cloud configuration to deliver a CDSW hands-on workshop on AWS.  
 
 
 ## File Organization  
